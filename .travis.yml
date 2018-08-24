@@ -1,0 +1,34 @@
+sudo: required
+language: node_js
+node_js:
+- '8'
+notifications:
+  email: false
+services:
+- docker
+cache:
+  yarn: true
+  directories:
+  - node_modules
+branches:
+  only:
+  - master
+  - develop
+install: yarn
+script: npm run build
+before_deploy:
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- docker build -t qiansy/ecloud-frontend:dev-latest .
+- docker tag qiansy/ecloud-frontend:dev-latest qiansy/ecloud-frontend:latest
+- git tag "$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)"
+deploy:
+  - provider: script
+    script: bash ./build/docker_push.sh develop
+    on:
+      branch:
+        - develop
+  - provider: script
+    script: bash ./build/docker_push.sh master
+    on:
+      branch:
+        - master
