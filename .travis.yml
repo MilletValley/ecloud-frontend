@@ -20,6 +20,7 @@ before_deploy:
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 - docker build -t qiansy/ecloud-frontend:dev-latest .
 - docker tag qiansy/ecloud-frontend:dev-latest qiansy/ecloud-frontend:latest
+- docker push qiansy/ecloud-frontend
 - git tag "$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)"
 deploy:
   - provider: script
