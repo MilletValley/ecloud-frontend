@@ -104,6 +104,9 @@ export default {
         .then(res => {
           const { data } = res.data
           this.applicationTotal = data
+        })
+        .catch(() => {})
+        .then(() => {
           this.drawLine()
         })
     },

@@ -39,12 +39,12 @@
     <el-container style="overflow: auto">
       <el-header style="font-size: 12px">
         <!-- 面包屑导航 -->
-        <!-- <el-breadcrumb separator="/"
+        <el-breadcrumb separator="/"
                        class="bread-crumb">
           <el-breadcrumb-item v-for="nav in breadcrumb"
                               :key="nav.path"
                               :to="{ path: nav.path }">{{ nav.name }}</el-breadcrumb-item>
-        </el-breadcrumb> -->
+        </el-breadcrumb>
         <!-- 个人中心 -->
         <div class="user-info">
           <el-dropdown @command="handleCommand">
@@ -53,7 +53,7 @@
               <i class="el-icon-arrow-down el-icon--right"></i>
             </span>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+              <el-dropdown-item command="profile">个人信息</el-dropdown-item>
               <el-dropdown-item command="about">关于</el-dropdown-item>
               <el-dropdown-item command="logout">退出</el-dropdown-item>
             </el-dropdown-menu>
@@ -62,6 +62,52 @@
       </el-header>
       <div class="el-main">
         <router-view/>
+        <!-- 个人信息 -->
+        <el-dialog title="用户信息"
+                   :visible.sync="userDialogVisible"
+                   width="650px">
+          <el-row>
+            <el-col :span="12">
+              <el-form label-width="100px" class="messageDialog">
+                <el-form-item label="用户名：">{{ userInfo.userName }}</el-form-item>
+                <el-form-item label="登录名：">{{ userInfo.loginName }}</el-form-item>
+                <el-form-item label="状态：">{{ userInfo.state === 0?'启用':'禁用' }}</el-form-item>
+                <el-form-item label="邮箱：">{{ userInfo.email }}</el-form-item>
+                <el-form-item label="创建时间：">{{ userInfo.createTime }}</el-form-item>
+              </el-form>
+            </el-col>
+            <el-col :span="12">
+              <img src="../assets/elogo.png" width="70%" style="margin-top: 20px">
+            </el-col>
+          </el-row>
+          <span slot="footer" class="dialog-footer">
+            <el-button @click="userDialogVisible = false">关 闭</el-button>
+          </span>
+        </el-dialog>
+        <!-- 关于 -->
+        <el-dialog title="关于"
+                   :visible.sync="aboutDialogVisible"
+                   width="650px">
+          <el-row>
+            <el-col :span="12" style="padding-left: 40px">
+              <p style="font-size: 28px; padding-bottom: 0">信服E云</p>
+              <p style="margin-top: -10px">便 捷  高 效  安 全</p>
+            </el-col>
+            <el-col :span="12">
+              <img src="../assets/elogo.png" width="60%" style="margin-top: 10px">
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-form label-width="100px" class="messageDialog" style="margin-top: 30px">
+              <el-form-item label="版本号："></el-form-item>
+              <el-form-item label="内部版本号："></el-form-item>
+              <el-form-item label="版本信息："></el-form-item>
+            </el-form>
+          </el-row>
+          <span slot="footer" class="dialog-footer">
+            <el-button @click="aboutDialogVisible = false">关 闭</el-button>
+          </span>
+        </el-dialog>
       </div>
     </el-container>
   </el-container>
@@ -75,7 +121,9 @@ export default {
   name: 'Layout',
   data () {
     return {
-      clientWidth: 1920
+      clientWidth: 1920,
+      userDialogVisible: false,
+      aboutDialogVisible: false
     }
   },
   components: {
@@ -96,13 +144,17 @@ export default {
       return routes.filter(route => route.meta)
     },
     ...mapState({
-      userName: state => {
-        if (state.base.userInfo.userName) {
-          return state.base.userInfo.userName
+      userInfo: state => {
+        return state.base.userInfo
+      },
+      userName () {
+        if (this.userInfo.userName) {
+          return this.userInfo.userName
+        } else {
+          return this.userInfo.loginName
         }
-        return state.base.userInfo.loginName
-      }
-      // breadcrumb: state => state.nav.breadcrumb
+      },
+      breadcrumb: state => state.nav.breadcrumb
     })
   },
   methods: {
@@ -111,7 +163,9 @@ export default {
       if (command === 'logout') {
         this._logout()
       } else if (command === 'profile') {
-        this.$message('个人中心')
+        this.userDialogVisible = true
+      } else if (command === 'about') {
+        this.aboutDialogVisible = true
       }
     },
     _logout () {
@@ -176,5 +230,8 @@ export default {
 }
 .menu-icon {
   margin-right: 5px;
+}
+.messageDialog .el-form-item {
+  margin-bottom: 0;
 }
 </style>

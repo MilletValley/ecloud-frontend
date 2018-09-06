@@ -50,7 +50,7 @@
                       size="mini">拒绝</el-tag>
               <el-tag v-else-if="props.row.applyState===2"
                       type="warning"
-                      size="mini">审核中...</el-tag>
+                      size="mini">审核中</el-tag>
               <el-tag v-else-if="props.row.applyState===3"
                       type="info"
                       size="mini">已撤回</el-tag>
@@ -98,7 +98,7 @@
                   size="mini">拒绝</el-tag>
           <el-tag v-else-if="scope.row.applyState===2"
                   type="warning"
-                  size="mini">审核中...</el-tag>
+                  size="mini">审核中</el-tag>
           <el-tag v-else-if="scope.row.applyState===3"
                   type="info"
                   size="mini">已撤回</el-tag>
@@ -445,8 +445,9 @@ import { fetchAll as fetchTemplate } from '../../api/template'
 import { fetchAll as fetchSecurityGroup } from '../../api/securityGroup'
 import { fetchAll as fetchStorage } from '../../api/storage'
 import { mapState } from 'vuex'
+// import ApplyTabFold from '../ApplyTabFold'
 export default {
-  name: 'Application',
+  name: 'Apply',
   mixins: [serverMixin],
   data () {
     const originFormData = {

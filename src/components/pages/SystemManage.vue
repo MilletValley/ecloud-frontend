@@ -152,7 +152,7 @@
                           size="mini">拒绝</el-tag>
                   <el-tag v-else-if="props.row.applyState===2"
                           type="warning"
-                          size="mini">审核中...</el-tag>
+                          size="mini">审核中</el-tag>
                   <el-tag v-else-if="props.row.applyState===3"
                           type="info"
                           size="mini">已撤回</el-tag>

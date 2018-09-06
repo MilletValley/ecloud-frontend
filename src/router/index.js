@@ -3,7 +3,7 @@ import Router from 'vue-router'
 import Login from '@/components/pages/Login'
 import Layout from '@/components/Layout'
 import Dashboard from '@/components/pages/Dashboard'
-import Application from '@/components/pages/Application'
+import Apply from '@/components/pages/Apply'
 import SystemManage from '@/components/pages/SystemManage'
 import ApplicationManage from '@/components/pages/ApplicationManage'
 import DatabaseManage from '@/components/pages/DatabaseManage'
@@ -43,9 +43,19 @@ export const routes = [
       {
         path: '',
         name: 'apply',
-        component: Application,
+        component: Apply,
         meta: {
-          title: '申请'
+          title: '申请',
+          breadcrumb: [
+            {
+              name: '首页',
+              path: '/'
+            },
+            {
+              name: '业务申请',
+              path: '/apply'
+            }
+          ]
         }
       }
     ]
@@ -63,7 +73,17 @@ export const routes = [
         name: 'system',
         component: SystemManage,
         meta: {
-          title: '系统服务'
+          title: '系统服务',
+          breadcrumb: [
+            {
+              name: '首页',
+              path: '/'
+            },
+            {
+              name: '系统服务',
+              path: '/servermanage/system'
+            }
+          ]
         }
       },
       {
@@ -71,7 +91,17 @@ export const routes = [
         name: 'application',
         component: ApplicationManage,
         meta: {
-          title: '应用服务器'
+          title: '应用服务器',
+          breadcrumb: [
+            {
+              name: '首页',
+              path: '/'
+            },
+            {
+              name: '应用服务器',
+              path: '/servermanage/application'
+            }
+          ]
         }
       },
       {
@@ -79,7 +109,17 @@ export const routes = [
         name: 'database',
         component: DatabaseManage,
         meta: {
-          title: '数据库服务器'
+          title: '数据库服务器',
+          breadcrumb: [
+            {
+              name: '首页',
+              path: '/'
+            },
+            {
+              name: '数据库服务器',
+              path: '/servermanage/database'
+            }
+          ]
         }
       },
       {
@@ -87,7 +127,17 @@ export const routes = [
         name: 'middleware',
         component: MiddlewareManage,
         meta: {
-          title: '中间件服务器'
+          title: '中间件服务器',
+          breadcrumb: [
+            {
+              name: '首页',
+              path: '/'
+            },
+            {
+              name: '中间件服务器',
+              path: '/servermanage/middleware'
+            }
+          ]
         }
       }
     ]
