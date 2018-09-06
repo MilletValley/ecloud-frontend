@@ -14,7 +14,9 @@
                              style="float: right;">查看</router-link>
             </div>
             <div style="position: relative;">
-              <span :class="$style.serverNumber">0</span>
+              <span :class="$style.serverNumber">
+                {{ serverTotal[key+'Num'] }}
+              </span>
               <i-icon :name="getKebabCase(key)"
                       :class="$style.serverIcon"></i-icon>
             </div>
@@ -32,7 +34,7 @@
             </el-col>
             <el-col :span="16" :class="$style.hardware">
               <el-row><span :class="$style.hardwareName">{{ value[0] }}({{ value[1] }})</span></el-row>
-              <el-row :class="$style.hardwareNumber">456</el-row>
+              <el-row :class="$style.hardwareNumber">{{ hardwareTotal[key+'Num'] }}</el-row>
             </el-col>
           </el-card>
         </el-col>
@@ -52,6 +54,7 @@
 </template>
 
 <script>
+import { fetchServer, fetchHardware, fetchApplication } from '../../api/home.js'
 import IIcon from '../IIcon.vue'
 // 引入 ECharts 主模块
 var echarts = require('echarts/lib/echarts')
@@ -76,13 +79,34 @@ export default {
         cpu: ['CPU', '个'],
         memory: ['内存', 'MB'],
         disk: ['磁盘', 'GB']
-      }
+      },
+      serverTotal: {},
+      hardwareTotal: {},
+      applicationTotal: {}
     }
   },
-  mounted () {
-    this.drawLine()
+  created () {
+    this.fetchData()
   },
   methods: {
+    fetchData () {
+      fetchServer()
+        .then(res => {
+          const { data } = res.data
+          this.serverTotal = data
+        })
+      fetchHardware()
+        .then(res => {
+          const { data } = res.data
+          this.hardwareTotal = data
+        })
+      fetchApplication()
+        .then(res => {
+          const { data } = res.data
+          this.applicationTotal = data
+          this.drawLine()
+        })
+    },
     // 驼峰命名法转短横线命名法
     getKebabCase (str) {
       return str.replace(/[A-Z]/g, function (i) {
@@ -93,22 +117,30 @@ export default {
     drawLine () {
       let barChart = echarts.init(document.getElementById('barChart'))
       barChart.setOption({
-        legend: {},
-        tooltip: {},
-        dataset: {
-          source: [
-            ['product', '申请总量', '通过总量'],
-            ['2018-1-26', 9, 8],
-            ['2018-1-29', 3, 0],
-            ['2018-1-30', 1, 1],
-            ['2018-8-27', 2, 2]
-          ]
+        legend: {
+          data: ['申请总量', '通过总量']
         },
-        xAxis: {type: 'category'},
+        tooltip: {},
+        xAxis: {
+          type: 'category',
+          data: this.applyTime
+        },
         yAxis: {},
         series: [
-          {type: 'bar', label: this.labelNum, barWidth: 40},
-          {type: 'bar', label: this.labelNum, barWidth: 40}
+          {
+            type: 'bar',
+            label: this.labelNum,
+            name: '申请总量',
+            barWidth: 40,
+            data: this.applyNum
+          },
+          {
+            type: 'bar',
+            label: this.labelNum,
+            name: '通过总量',
+            barWidth: 40,
+            data: this.adoptNum
+          }
         ]
       })
       window.addEventListener('resize', function () {
@@ -117,6 +149,7 @@ export default {
     }
   },
   computed: {
+    // 柱状图顶部数字
     labelNum () {
       return {
         normal: {
@@ -127,6 +160,18 @@ export default {
           }
         }
       }
+    },
+    // 申请数量
+    applyNum () {
+      return this.applicationTotal.map(apply => apply.applyNum)
+    },
+    // 通过数量
+    adoptNum () {
+      return this.applicationTotal.map(apply => apply.adoptNum)
+    },
+    // 申请时间
+    applyTime () {
+      return this.applicationTotal.map(apply => apply.applicationTime)
     }
   },
   components: {

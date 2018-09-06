@@ -43,7 +43,7 @@
             <el-button type="primary"
                        class="login-button"
                        @click="userLogin('loginForm')"
-                       :loading="btnLoading">登&nbsp;&nbsp;录</el-button>
+                       :loading="btnLoading">登  录</el-button>
           </el-form-item>
         </el-form>
       </el-col>

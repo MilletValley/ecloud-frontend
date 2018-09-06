@@ -3,6 +3,7 @@ $error-color: rgb(202, 39, 39);
 $loading-color: rgb(32, 163, 32);
 $waiting-color: rgb(158, 158, 22);
 $delete-color: rgb(223, 77, 77);
+$stoped-color: rgb(136, 136, 136);
 .successColor {
   color: $success-color;
 }
@@ -19,4 +20,8 @@ $delete-color: rgb(223, 77, 77);
 }
 .waitingColor {
   color: $waiting-color;
+}
+
+.stopedColor {
+  color: $stoped-color
 }

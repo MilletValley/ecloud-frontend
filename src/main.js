@@ -26,7 +26,7 @@ router.beforeEach((to, from, next) => {
       .dispatch('getUserInfo', { token })
       .then(() => {
         store.commit(types.SET_TOKEN, { token })
-        next('/')
+        next({ ...to, replace: true })
       })
       .catch(error => {
         Message.error(error)

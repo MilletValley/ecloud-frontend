@@ -33,7 +33,7 @@ export const routes = [
     ]
   },
   {
-    path: '/application',
+    path: '/apply',
     component: Layout,
     meta: {
       title: '业务系统',
@@ -42,7 +42,7 @@ export const routes = [
     children: [
       {
         path: '',
-        name: 'application',
+        name: 'apply',
         component: Application,
         meta: {
           title: '申请'
