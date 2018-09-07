@@ -23,7 +23,7 @@
         <el-form-item style="float: left">
           <el-button type="primary"
                      size="small"
-                     @click="dialogVisible=true">添加</el-button>
+                     @click="createModalVisible=true">添加</el-button>
         </el-form-item>
       </el-form>
     </el-row>
@@ -31,6 +31,7 @@
               :data="items.slice((currentPage-1)*pagesize,currentPage*pagesize)"
               style="width: 100%">
       <el-table-column type="expand">
+        <!-- 折叠面板 -->
         <template slot-scope="props">
           <el-form label-position="left" inline class="demo-table-expand">
             <el-form-item label="名称">{{ props.row.instanceName }}</el-form-item>
@@ -42,18 +43,8 @@
             <el-form-item label="操作系统类型">{{ props.row.osName }}</el-form-item>
             <el-form-item label="数据卷大小">{{ props.row.diskSize }}</el-form-item>
             <el-form-item label="申请状态">
-              <el-tag v-if="props.row.applyState===0"
-                      type="success"
-                      size="mini">通过</el-tag>
-              <el-tag v-else-if="props.row.applyState===1"
-                      type="danger"
-                      size="mini">拒绝</el-tag>
-              <el-tag v-else-if="props.row.applyState===2"
-                      type="warning"
-                      size="mini">审核中</el-tag>
-              <el-tag v-else-if="props.row.applyState===3"
-                      type="info"
-                      size="mini">已撤回</el-tag>
+              <el-tag :type="tagType(props.row.applyState)"
+                      size="mini">{{ stateConvert(props.row.applyState) }}</el-tag>
             </el-form-item>
             <el-form-item label="到期时间">
               <el-tag type="info"
@@ -90,18 +81,8 @@
                        min-width="100"
                        align="center">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.applyState===0"
-                  type="success"
-                  size="mini">通过</el-tag>
-          <el-tag v-else-if="scope.row.applyState===1"
-                  type="danger"
-                  size="mini">拒绝</el-tag>
-          <el-tag v-else-if="scope.row.applyState===2"
-                  type="warning"
-                  size="mini">审核中</el-tag>
-          <el-tag v-else-if="scope.row.applyState===3"
-                  type="info"
-                  size="mini">已撤回</el-tag>
+          <el-tag :type="tagType(scope.row.applyState)"
+                  size="mini">{{ stateConvert(scope.row.applyState) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="操作"
@@ -151,148 +132,9 @@
                      background
                      :total="items.length"></el-pagination>
     </div>
-    <!-- 添加申请 -->
-    <el-dialog title="添加申请"
-               :visible.sync="dialogVisible"
-               width="50%"
-               @close="dialogClosed"
-               :before-close="beforeClose">
-      <el-collapse v-model="activeNames"
-                   class="applyCollapse">
-        <el-collapse-item title="步骤一：选择模板" name="1">
-          <el-tabs type="border-card">
-            <el-tab-pane v-for="tab in tabTitel"
-                         :key="tab.id"
-                         :label="templateTypeMapping[tab]">
-              <el-radio-group v-model="createInstance.templateId">
-                <el-row v-for="template in templates.filter(v => v.typeId === tab)"
-                        :key="template.id"
-                        class="outsideRow">
-                  <el-radio :label="template.id">
-                    <el-row>
-                      <el-col :span="8" style="padding-left: 30px;">
-                        <img :src="template.templateIconPath"
-                             width="130px">
-                      </el-col>
-                      <el-col :span="16">
-                        <h4>{{ template.templateText }}</h4>
-                        <p>操作系统：{{ template.osTypeName}}</p>
-                        <p>虚拟化类型：{{ template.hyperVisor }}</p>
-                      </el-col>
-                    </el-row>
-                  </el-radio>
-                </el-row>
-                </el-radio-group>
-            </el-tab-pane>
-          </el-tabs>
-        </el-collapse-item>
-        <el-collapse-item title="步骤二：配置实例" name="2">
-          <el-form :model="createInstance"
-                   ref="ruleForm"
-                   :rules="rules"
-                   label-width="100px"
-                   style="width: 70%; margin: 0 auto">
-            <el-form-item label="实例名称"
-                          prop="instanceName">
-              <el-input v-model="createInstance.instanceName"></el-input>
-            </el-form-item>
-            <el-form-item label="CPU内核数"
-                          prop="cpuNumber">
-              <el-input v-model.number="createInstance.cpuNumber"></el-input>
-            </el-form-item>
-            <el-form-item label="CPU(MHz)"
-                          prop="cpuSpeed">
-              <el-input v-model.number="createInstance.cpuSpeed"></el-input>
-            </el-form-item>
-            <el-form-item label="内存(MB)"
-                          prop="memory">
-              <el-input v-model.number="createInstance.memory"></el-input>
-            </el-form-item>
-            <el-form-item label="到期时间"
-                          prop="dueTime">
-              <el-date-picker v-model="createInstance.dueTime"
-                              type="datetime"
-                              placeholder="选择到期时间"
-                              format="yyyy-MM-dd HH:mm:ss"
-                              value-format="yyyy-MM-dd HH:mm:ss"></el-date-picker>
-            </el-form-item>
-          </el-form>
-        </el-collapse-item>
-        <el-collapse-item title="步骤三：安全组"
-                          class="collapse-style"
-                          name="3">
-          <el-table :data="getSecurityGroup"
-                    style="width: 100%">
-            <el-table-column prop="ruleType"
-                             label="规则类型"
-                             min-width="100"></el-table-column>
-            <el-table-column prop="protocol"
-                             label="协议"
-                             min-width="100"></el-table-column>
-            <el-table-column prop="startPort"
-                             label="起始端口"
-                             min-width="100"></el-table-column>
-            <el-table-column prop="endPort"
-                             label="结束端口"
-                             min-width="100"></el-table-column>
-            <el-table-column prop="cidp"
-                             label="CIDP"
-                             min-width="100"></el-table-column>
-          </el-table>
-        </el-collapse-item>
-        <el-collapse-item title="步骤四：添加存储"
-                          class="collapse-style"
-                          name="4">
-          <el-table :data="getStorage">
-            <el-table-column prop="storageName"
-                             label="名称"
-                             min-width="100"></el-table-column>
-            <el-table-column prop="storageSize"
-                             label="大小(GB)"
-                             min-width="100"></el-table-column>
-            <el-table-column label="操作"
-                             min-width="100"
-                             align="center">
-              <template slot-scope="scope">
-                <el-button type="primary"
-                           size="small"
-                           icon="el-icon-plus"
-                           v-show="scope.$index+1 === getStorage.length && addStorage===false"
-                           @click="addStorage=true"></el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          <el-form inline
-                   v-show="addStorage"
-                   class="addStorage">
-            <el-row>
-              <el-col :span="8">
-                <el-form-item :label="dataDisk.storageName"></el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item>
-                  <el-input v-model="dataDisk.storageSize"></el-input>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8" style="text-align: center">
-                <el-form-item>
-                  <el-button type="danger"
-                              size="small"
-                              icon="el-icon-delete"
-                              @click="addStorage=false"></el-button>
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-form>
-        </el-collapse-item>
-      </el-collapse>
-      <span slot="footer" class="dialog-footer">
-        <el-button type="primary"
-                   @click="confirm"
-                   :loading="btnLoading">确 定</el-button>
-        <el-button @click="dialogVisible=false">取 消</el-button>
-      </span>
-    </el-dialog>
+    <create-apply-modal :visible.sync="createModalVisible"
+                        :btn-loading="btnLoading"
+                        @confirm="createConfirm"></create-apply-modal>
     <!-- 重新申请 -->
     <el-dialog title="重新申请"
                :visible.sync="onceApplyVisible"
@@ -438,29 +280,18 @@
 </template>
 <script>
 import isEqual from 'lodash/isEqual'
-import ApplyStateMapping from '../../utils/constant'
+import { ApplyStateMapping, typeMapping, templateTypeMapping } from '../../utils/constant'
 import { serverMixin } from '../mixins/serverMixins'
 import { fetchAll, deleteOne, createOne, modifyOne } from '../../api/apply'
 import { fetchAll as fetchTemplate } from '../../api/template'
 import { fetchAll as fetchSecurityGroup } from '../../api/securityGroup'
 import { fetchAll as fetchStorage } from '../../api/storage'
 import { mapState } from 'vuex'
-// import ApplyTabFold from '../ApplyTabFold'
+import CreateApplyModal from '../modal/CreateApplyModal'
 export default {
   name: 'Apply',
   mixins: [serverMixin],
   data () {
-    const originFormData = {
-      id: -1,
-      templateId: '',
-      instanceName: '',
-      cpuNumber: '',
-      cpuSpeed: '',
-      createTime: '',
-      dueTime: '',
-      securityGroup: [],
-      storages: []
-    }
     return {
       rules: {
         instanceName: [
@@ -482,7 +313,7 @@ export default {
           { required: true, message: '请输入到期时间', trigger: 'blur' }
         ]
       },
-      dialogVisible: false,
+      createModalVisible: false,
       onceApplyVisible: false,
       btnLoading: false,
       activeNames: ['1', '2', '3', '4'],
@@ -490,20 +321,12 @@ export default {
       getSecurityGroup: [],
       getStorage: [],
       tabTitel: [0, 1, 2, 3], // 对应系统模板，应用模板...
-      templateTypeMapping: {
-        0: '系统模板',
-        1: '应用模板',
-        2: '数据库模板',
-        3: '中间件模板'
-      },
       dataDisk: {
         id: -1,
         storageName: 'DATADISK',
         storageSize: ''
       },
       addStorage: false,
-      createInstance: Object.assign({}, originFormData),
-      originInstance: Object.assign({}, originFormData),
       updateInstance: {},
       hasDataDisk: -1,
       updateDataDisk: {},
@@ -542,6 +365,12 @@ export default {
           const { data } = res.data
           this.getStorage = data
         })
+    },
+    stateConvert (state) {
+      return ApplyStateMapping[state]
+    },
+    tagType (type) {
+      return typeMapping[type]
     },
     // 删除
     deleteBtn ({ row: apply, $index }) {
@@ -687,7 +516,7 @@ export default {
       }
     },
     // 添加
-    confirm () {
+    createConfirm () {
       if (this.createInstance.templateId === '') {
         this.$message.warning({ message: '请选择模板' })
       } else if (this.addStorage && this.dataDisk.storageSize === '') {
@@ -704,7 +533,7 @@ export default {
             }
             createOne(this.createInstance)
               .then(res => {
-                this.dialogVisible = false
+                this.createModalVisible = false
                 const { data, message } = res.data
                 this.$message.success(message)
                 this.items.push(data)
@@ -738,6 +567,9 @@ export default {
     nowDate () {
       return new Date().toLocaleDateString().replace(/\//g, '-') + ' ' + new Date().toTimeString().substr(0, 8)
     }
+  },
+  components: {
+    CreateApplyModal
   }
 }
 </script>

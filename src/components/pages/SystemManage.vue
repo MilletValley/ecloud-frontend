@@ -144,18 +144,8 @@
                 <el-form-item label="操作系统类型">{{ props.row.osName }}</el-form-item>
                 <el-form-item label="内存(MB)">{{ props.row.memory }}</el-form-item>
                 <el-form-item label="申请状态">
-                  <el-tag v-if="props.row.applyState===0"
-                          type="success"
-                          size="mini">通过</el-tag>
-                  <el-tag v-else-if="props.row.applyState===1"
-                          type="danger"
-                          size="mini">拒绝</el-tag>
-                  <el-tag v-else-if="props.row.applyState===2"
-                          type="warning"
-                          size="mini">审核中</el-tag>
-                  <el-tag v-else-if="props.row.applyState===3"
-                          type="info"
-                          size="mini">已撤回</el-tag>
+                  <el-tag :type="tagType(props.row.applyState)"
+                      size="mini">{{ stateConvert(props.row.applyState) }}</el-tag>
                 </el-form-item>
                 <el-form-item label="数据卷大小">{{ props.row.diskSize }}</el-form-item>
                 <el-form-item label="用户名">{{ userName }}</el-form-item>
@@ -380,6 +370,7 @@
 <script>
 import { fetchAll, modifyOne, modifySome, deleteSome } from '../../api/system'
 import { fetchAll as fetchTemplates } from '../../api/template'
+import { ApplyStateMapping, typeMapping } from '../../utils/constant'
 import { serverMixin } from '../mixins/serverMixins'
 import { mapState } from 'vuex'
 import IIcon from '../IIcon'
@@ -420,6 +411,12 @@ export default {
           const { data } = res.data
           this.templates = data
         })
+    },
+    stateConvert (state) {
+      return ApplyStateMapping[state]
+    },
+    tagType (type) {
+      return typeMapping[type]
     },
     dialogCurrentChange (currentPage) {
       this.dialogCurrentPage = currentPage
