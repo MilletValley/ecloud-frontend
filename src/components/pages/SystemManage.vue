@@ -62,153 +62,20 @@
       </el-form>
     </el-row>
     <!-- 统计实例数据表格 -->
-    <el-dialog title="统计实例数据"
-               :visible.sync="dialogTableVisible"
-               class="dialogTableVisible"
-               @open="openTableDialog"
-               width="80%">
-      <el-table v-if="items"
-                :data="items.slice((dialogCurrentPage-1)*dialogPageSize,dialogCurrentPage*dialogPageSize)"
-                style="100%">
-        <el-table-column label="实例名称"
-                         min-width="100"
-                         prop="instanceName"
-                         align="center"></el-table-column>
-        <el-table-column label="总CPU"
-                         min-width="100"
-                         prop="cpuNumber"
-                         align="center"></el-table-column>
-        <el-table-column label="CPU利用率"
-                         min-width="100"
-                         prop="cpuUtilization"
-                         align="center"></el-table-column>
-        <el-table-column label="网络读取量"
-                         min-width="100"
-                         prop="networdRead"
-                         align="center"></el-table-column>
-        <el-table-column label="网络写入量"
-                         min-width="100"
-                         prop="networkWrite"
-                         align="center"></el-table-column>
-        <el-table-column label="磁盘读取(字节)"
-                         min-width="100"
-                         prop="diskReadByte"
-                         align="center"></el-table-column>
-        <el-table-column label="磁盘写入(字节)"
-                         min-width="100"
-                         prop="diskWriteByte"
-                         align="center"></el-table-column>
-        <el-table-column label="磁盘读取(IO)"
-                         min-width="100"
-                         prop="diskReadIO"
-                         align="center"></el-table-column>
-        <el-table-column label="磁盘写入(IO)"
-                         min-width="100"
-                         prop="diskWriteIO"
-                         align="center"></el-table-column>
-      </el-table>
-      <div class="block" style="text-align: right; margin-top: 8px">
-        <el-pagination background
-                      @current-change="dialogCurrentChange"
-                      :page-size="dialogPageSize"
-                      :current-page="dialogCurrentPage"
-                      layout="prev, pager, next"
-                      :total="items.length"></el-pagination>
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogTableVisible = false"
-                   size="small">关 闭</el-button>
-      </span>
-    </el-dialog>
+    <statistics-instance-dialog :tableData="items"
+                                :visible.sync="dialogTableVisible"></statistics-instance-dialog>
     <el-table v-if="items"
               :data="itemPage"
               @selection-change="handleSelectionChange"
               style="width: 100%">
       <el-table-column type="selection"
                        width="40"></el-table-column>
-      <!-- 折叠面板开始 -->
       <el-table-column type="expand">
         <template slot-scope="props">
-          <el-tabs type="border-card">
-            <!-- 详细信息 -->
-            <el-tab-pane label="详细信息">
-              <el-form label-position="left"
-                       inline
-                       class="demo-table-expand">
-                <el-form-item label="名称">{{ props.row.instanceName }}</el-form-item>
-                <el-form-item label="虚拟机密码">{{ props.row.vmPass }}</el-form-item>
-                <el-form-item label="资源域">{{ props.row.zoneName }}</el-form-item>
-                <el-form-item label="CPU内核数">{{ props.row.cpuNumber }}</el-form-item>
-                <el-form-item label="模板名称">{{ props.row.templateName }}</el-form-item>
-                <el-form-item label="CPU(MHz)">{{ props.row.cpuSpeed }}</el-form-item>
-                <el-form-item label="操作系统类型">{{ props.row.osName }}</el-form-item>
-                <el-form-item label="内存(MB)">{{ props.row.memory }}</el-form-item>
-                <el-form-item label="申请状态">
-                  <el-tag :type="tagType(props.row.applyState)"
-                      size="mini">{{ stateConvert(props.row.applyState) }}</el-tag>
-                </el-form-item>
-                <el-form-item label="数据卷大小">{{ props.row.diskSize }}</el-form-item>
-                <el-form-item label="用户名">{{ userName }}</el-form-item>
-                <el-form-item label="到期时间">
-                  <el-tag type="info"
-                          size="mini">{{ props.row.dueTime }}</el-tag>
-                </el-form-item>
-              </el-form>
-            </el-tab-pane>
-            <!-- 网卡 -->
-            <el-tab-pane label="网卡">
-              <el-table :data="props.row.networkCards"
-                        style="width: 100%">
-                <el-table-column prop="cardId"
-                                 label="网卡ID"
-                                 min-width="80"
-                                 align="center"></el-table-column>
-                <el-table-column prop="networkName"
-                                 label="网络名称"
-                                 min-width="80"
-                                 align="center"></el-table-column>
-                <el-table-column prop="traffictype"
-                                 label="类型"
-                                 min-width="80"
-                                 align="center"></el-table-column>
-                <el-table-column prop="ipAddress"
-                                 label="IP地址"
-                                 min-width="80"
-                                 align="center"></el-table-column>
-                <el-table-column prop="gateway"
-                                 label="网关"
-                                 min-width="80"
-                                 align="center"></el-table-column>
-                <el-table-column prop="netmask"
-                                 label="网络掩码"
-                                 min-width="80"
-                                 align="center"></el-table-column>
-                <el-table-column prop="isDefault"
-                                 label="默认网卡"
-                                 min-width="80"
-                                 :formatter="isDefaultCard"
-                                 align="center"></el-table-column>
-              </el-table>
-            </el-tab-pane>
-            <!-- 统计数据 -->
-            <el-tab-pane label="统计数据">
-              <el-form label-position="left"
-                       inline
-                       class="demo-table-expand">
-                <el-form-item label="总CPU">{{ props.row.cpuNumber }}*{{ props.row.cpuSpeed }} MHz</el-form-item>
-                <el-form-item label="CPU利用率">{{ props.row.cpuUtilization }}</el-form-item>
-                <el-form-item label="网络读取量">{{ props.row.networdRead }}</el-form-item>
-                <el-form-item label="网络写入量">{{ props.row.networkWrite }}</el-form-item>
-                <el-form-item label="磁盘读取(字节)">{{ props.row.diskReadByte }}</el-form-item>
-                <el-form-item label="磁盘写入(字节)">{{ props.row.diskWriteByte }}</el-form-item>
-                <el-form-item label="磁盘读取(IO)">{{ props.row.diskReadIO }}</el-form-item>
-                <el-form-item label="磁盘写入(IO)">{{ props.row.diskWriteIO }}</el-form-item>
-              </el-form>
-            </el-tab-pane>
-          </el-tabs>
+          <!-- 折叠面板 -->
+          <accordion :itemDetail="props.row"></accordion>
         </template>
       </el-table-column>
-      <!-- 折叠面板结束 -->
       <el-table-column label="序号"
                        min-width="50"
                        align="center">
@@ -294,7 +161,7 @@
         </el-row>
         <span slot="footer" class="dialog-footer">
           <el-button type="primary"
-                     @click="confirm"
+                     @click="restartConfirm"
                      :loading="btnLoading">确 定</el-button>
           <el-button @click="restartDialogVisible = false">取 消</el-button>
         </span>
@@ -370,9 +237,9 @@
 <script>
 import { fetchAll, modifyOne, modifySome, deleteSome } from '../../api/system'
 import { fetchAll as fetchTemplates } from '../../api/template'
-import { ApplyStateMapping, typeMapping } from '../../utils/constant'
+import StatisticsInstanceDialog from '../modal/StatisticsInstanceDialog'
+import Accordion from '../Accordion'
 import { serverMixin } from '../mixins/serverMixins'
-import { mapState } from 'vuex'
 import IIcon from '../IIcon'
 export default {
   name: 'SystemManage',
@@ -380,8 +247,6 @@ export default {
   data () {
     return {
       dialogTableVisible: false,
-      dialogCurrentPage: 1,
-      dialogPageSize: 10,
       multipleSelection: [],
       templates: [],
       restartDialogVisible: false,
@@ -412,21 +277,6 @@ export default {
           this.templates = data
         })
     },
-    stateConvert (state) {
-      return ApplyStateMapping[state]
-    },
-    tagType (type) {
-      return typeMapping[type]
-    },
-    dialogCurrentChange (currentPage) {
-      this.dialogCurrentPage = currentPage
-    },
-    openTableDialog () {
-      this.dialogCurrentPage = 1
-    },
-    isDefaultCard (data) {
-      return data.isDefault === 0 ? '否' : '是'
-    },
     handleCommand (command) {
       if (command === 'reshipment') {
         this.restartDialogVisible = true
@@ -439,7 +289,7 @@ export default {
         this.remoteDialogVisible = true
       }
     },
-    confirm () {
+    restartConfirm () {
       this.btnLoading = true
       modifyOne(this.multipleSelection[0]) // 重新安装
         .then(res => {
@@ -480,33 +330,16 @@ export default {
           .then(() => {
             this.btnLoading = false
           })
-      } else if (this.currencyCommand === 'start') { // 启动
-        this.multipleSelection.forEach(item => {
-          item.vmState = 0
-        })
-        modifySome(this.multipleSelection)
-          .then(res => {
-            const { data, message } = res.data
-            this.items.forEach((item, index) => {
-              data.forEach((i, v) => {
-                if (i.id === item.id) {
-                  this.items[index] = data[v]
-                }
-              })
-            })
-            this.$message.success(message)
-            this.currencyDialogVisible = false
+      } else if (['start', 'stop'].includes(this.currencyCommand)) { // 启动、停止
+        if (this.currencyCommand === 'start') {
+          this.multipleSelection.forEach(item => {
+            item.vmState = 0
           })
-          .catch(error => {
-            this.$message.error(error)
+        } else {
+          this.multipleSelection.forEach(item => {
+            item.vmState = 1
           })
-          .then(() => {
-            this.btnLoading = false
-          })
-      } else if (this.currencyCommand === 'stop') { // 停止
-        this.multipleSelection.forEach(item => {
-          item.vmState = 1
-        })
+        }
         modifySome(this.multipleSelection)
           .then(res => {
             const { data, message } = res.data
@@ -583,14 +416,6 @@ export default {
     }
   },
   computed: {
-    ...mapState({
-      userName: state => {
-        if (state.base.userInfo.userName) {
-          return state.base.userInfo.userName
-        }
-        return state.base.userInfo.loginName
-      }
-    }),
     itemPage () {
       return this.items.slice((this.currentPage - 1) * this.pagesize, this.currentPage * this.pagesize)
     },
@@ -643,7 +468,9 @@ export default {
     }
   },
   components: {
-    IIcon
+    IIcon,
+    StatisticsInstanceDialog,
+    Accordion
   }
 }
 </script>

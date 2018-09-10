@@ -1,8 +1,9 @@
 <template>
   <section>
-    <el-dialog title="添加申请"
+    <el-dialog title="重新申请"
                :visible.sync="dialogVisible"
                width="50%"
+               @open="dialogOpen"
                @close="dialogClosed"
                :before-close="beforeClose">
       <el-collapse v-model="activeNames"
@@ -30,7 +31,7 @@
                     </el-row>
                   </el-radio>
                 </el-row>
-              </el-radio-group>
+                </el-radio-group>
             </el-tab-pane>
           </el-tabs>
         </el-collapse-item>
@@ -69,7 +70,7 @@
         <el-collapse-item title="步骤三：安全组"
                           class="collapse-style"
                           name="3">
-          <el-table :data="getSecurityGroup"
+          <el-table :data="formData.securityGroups"
                     style="width: 100%">
             <el-table-column prop="ruleType"
                              label="规则类型"
@@ -91,7 +92,7 @@
         <el-collapse-item title="步骤四：添加存储"
                           class="collapse-style"
                           name="4">
-          <el-table :data="getStorage">
+          <el-table :data="formData.storages|filterDataDisk">
             <el-table-column prop="storageName"
                              label="名称"
                              min-width="100"></el-table-column>
@@ -105,7 +106,7 @@
                 <el-button type="primary"
                            size="small"
                            icon="el-icon-plus"
-                           v-show="scope.$index+1 === getStorage.length && addStorage===false"
+                           v-show="scope.$index+index === formData.storages.length && addStorage===false"
                            @click="addStorage=true"></el-button>
               </template>
             </el-table-column>
@@ -146,52 +147,70 @@
 <script>
 import { applyModalMixin } from '../mixins/applyModalMixins'
 export default {
-  name: 'CreateApply',
+  name: 'UpdateApplyModal',
   mixins: [applyModalMixin],
   props: [
     'visible',
     'btnLoading',
     'templates',
-    'getSecurityGroup',
-    'getStorage'
+    'applyInfo'
   ],
   data () {
-    const baseFormData = {
-      id: -1,
-      templateId: '',
-      instanceName: '',
-      cpuNumber: '',
-      cpuSpeed: '',
-      memory: '',
-      createTime: '',
-      dueTime: '',
-      securityGroup: [],
-      storages: []
-    }
     return {
-      formData: Object.assign({}, baseFormData),
-      originFormData: Object.assign({}, baseFormData)
+      formData: {},
+      originFormData: {}
+    }
+  },
+  filters: {
+    filterDataDisk (val) {
+      if (val) {
+        return val.filter(v => v.storageName !== 'DATADISK')
+      }
+    }
+  },
+  computed: {
+    // 不存在'DATADISK'
+    hasDataDisk () {
+      return this.formData.storages.findIndex(v => v.storageName === 'DATADISK') !== -1
+    },
+    // DATADISK索引
+    dataDiskIndex () {
+      return this.formData.storages.findIndex(v => v.storageName === 'DATADISK')
+    },
+    // 存储列表中最后一个元素显示添加
+    index () {
+      return this.hasDataDisk ? 2 : 1
     }
   },
   methods: {
     dialogClosed () {
       this.addStorage = false
-      this.dataDisk.storageSize = ''
-      this.formData = { ...this.originFormData }
+      this.dataDisk = {
+        id: -1,
+        storageName: 'DATADISK',
+        storageSize: ''
+      }
       this.$refs.ruleForm.clearValidate()
     },
+    dialogOpen () {
+      this.originFormData = { ...this.applyInfo }
+      this.formData = { ...this.applyInfo }
+      if (this.hasDataDisk) { // 存在DATADISK
+        this.addStorage = true
+        this.dataDisk = Object.assign({}, this.formData.storages.find(v => v.storageName === 'DATADISK'))
+      }
+    },
     confirm () {
-      if (this.formData.templateId === '') {
-        this.$message.warning({ message: '请选择模板' })
-      } else if (this.addStorage && this.dataDisk.storageSize === '') {
+      if (this.addStorage && this.dataDisk.storageSize === '') {
         this.$message.warning({ message: '请选择DATADISK大小' })
       } else {
         this.$refs.ruleForm.validate((valid) => {
           if (valid) {
-            this.formData.securityGroup = this.getSecurityGroup
-            this.formData.storages = this.getStorage.concat()
-            this.formData.createTime = this.nowDate
-            if (this.addStorage) {
+            if (this.hasDataDisk && this.addStorage) {
+              this.formData.storages.splice(this.dataDiskIndex, 1, this.dataDisk)
+            } else if (this.hasDataDisk && this.addStorage === false) {
+              this.formData.storages.splice(this.dataDiskIndex, 1)
+            } else if (!this.hasDataDisk && this.addStorage) {
               this.formData.storages.push(this.dataDisk)
             }
             this.$emit('confirm', this.formData)

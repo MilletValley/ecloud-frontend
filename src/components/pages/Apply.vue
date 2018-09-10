@@ -91,7 +91,7 @@
         <template slot-scope="scope">
           <!-- 拒绝，已撤回：重新申请 -->
           <el-button type="primary"
-                     v-if="applyAgain.indexOf(scope.row.applyState)!==-1"
+                     v-if="[1, 3].includes(scope.row.applyState)"
                      icon="el-icon-refresh"
                      circle
                      size="mini"
@@ -113,6 +113,7 @@
                      size="mini"
                      :class="$style.miniCricleIconBtn"
                      @click="selectOne(scope)"></el-button>
+          <!-- 删除 -->
           <el-button type="danger"
                      icon="el-icon-delete"
                      circle
@@ -132,155 +133,23 @@
                      background
                      :total="items.length"></el-pagination>
     </div>
+    <!-- 添加 -->
     <create-apply-modal :visible.sync="createModalVisible"
                         :btn-loading="btnLoading"
+                        :templates="templates"
+                        :getSecurityGroup="getSecurityGroup"
+                        :getStorage="getStorage"
                         @confirm="createConfirm"></create-apply-modal>
     <!-- 重新申请 -->
-    <el-dialog title="重新申请"
-               :visible.sync="onceApplyVisible"
-               width="50%"
-               @open="openOnceApplyDialog">
-      <el-collapse v-model="activeNames"
-                   class="applyCollapse">
-        <el-collapse-item title="步骤一：选择模板" name="1">
-          <el-tabs type="border-card">
-            <el-tab-pane v-for="tab in tabTitel"
-                         :key="tab.id"
-                         :label="templateTypeMapping[tab]">
-              <el-radio-group v-model="updateInstance.templateId">
-                <el-row v-for="template in templates.filter(v => v.typeId === tab)"
-                        :key="template.id"
-                        class="outsideRow">
-                  <el-radio :label="template.id">
-                    <el-row>
-                      <el-col :span="8" style="padding-left: 30px;">
-                        <img :src="template.templateIconPath"
-                             width="130px">
-                      </el-col>
-                      <el-col :span="16">
-                        <h4>{{ template.templateText }}</h4>
-                        <p>操作系统：{{ template.osTypeName}}</p>
-                        <p>虚拟化类型：{{ template.hyperVisor }}</p>
-                      </el-col>
-                    </el-row>
-                  </el-radio>
-                </el-row>
-                </el-radio-group>
-            </el-tab-pane>
-          </el-tabs>
-        </el-collapse-item>
-        <el-collapse-item title="步骤二：配置实例" name="2">
-          <el-form :model="updateInstance"
-                   ref="ruleForm"
-                   :rules="rules"
-                   label-width="100px"
-                   style="width: 70%; margin: 0 auto">
-            <el-form-item label="实例名称"
-                          prop="instanceName">
-              <el-input v-model="updateInstance.instanceName"></el-input>
-            </el-form-item>
-            <el-form-item label="CPU内核数"
-                          prop="cpuNumber">
-              <el-input v-model.number="updateInstance.cpuNumber"></el-input>
-            </el-form-item>
-            <el-form-item label="CPU(MHz)"
-                          prop="cpuSpeed">
-              <el-input v-model.number="updateInstance.cpuSpeed"></el-input>
-            </el-form-item>
-            <el-form-item label="内存(MB)"
-                          prop="memory">
-              <el-input v-model.number="updateInstance.memory"></el-input>
-            </el-form-item>
-            <el-form-item label="到期时间"
-                          prop="dueTime">
-              <el-date-picker v-model="updateInstance.dueTime"
-                              type="datetime"
-                              placeholder="选择到期时间"
-                              format="yyyy-MM-dd HH:mm:ss"
-                              value-format="yyyy-MM-dd HH:mm:ss"></el-date-picker>
-            </el-form-item>
-          </el-form>
-        </el-collapse-item>
-        <el-collapse-item title="步骤三：安全组"
-                          class="collapse-style"
-                          name="3">
-          <el-table :data="updateInstance.securityGroups"
-                    style="width: 100%">
-            <el-table-column prop="ruleType"
-                             label="规则类型"
-                             min-width="100"></el-table-column>
-            <el-table-column prop="protocol"
-                             label="协议"
-                             min-width="100"></el-table-column>
-            <el-table-column prop="startPort"
-                             label="起始端口"
-                             min-width="100"></el-table-column>
-            <el-table-column prop="endPort"
-                             label="结束端口"
-                             min-width="100"></el-table-column>
-            <el-table-column prop="cidp"
-                             label="CIDP"
-                             min-width="100"></el-table-column>
-          </el-table>
-        </el-collapse-item>
-        <el-collapse-item title="步骤四：添加存储"
-                          class="collapse-style"
-                          name="4">
-          <el-table :data="updateInstance.storages|filterDataDisk">
-            <el-table-column prop="storageName"
-                             label="名称"
-                             min-width="100"></el-table-column>
-            <el-table-column prop="storageSize"
-                             label="大小(GB)"
-                             min-width="100"></el-table-column>
-            <el-table-column label="操作"
-                             min-width="100"
-                             align="center">
-              <template slot-scope="scope">
-                <el-button type="primary"
-                           size="small"
-                           icon="el-icon-plus"
-                           v-show="scope.$index+temp === updateInstance.storages.length && addStorage===false"
-                           @click="addStorage=true"></el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          <el-form inline
-                   v-show="addStorage"
-                   class="addStorage">
-            <el-row>
-              <el-col :span="8">
-                <el-form-item :label="updateDataDisk.storageName"></el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item>
-                  <el-input v-model="updateDataDisk.storageSize"></el-input>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8" style="text-align: center">
-                <el-form-item>
-                  <el-button type="danger"
-                              size="small"
-                              icon="el-icon-delete"
-                              @click="deleteDataDisk"></el-button>
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-form>
-        </el-collapse-item>
-      </el-collapse>
-      <span slot="footer" class="dialog-footer">
-        <el-button type="primary"
-                   @click="updateConfirm"
-                   :loading="btnLoading">确 定</el-button>
-        <el-button @click="onceApplyVisible=false">取 消</el-button>
-      </span>
-    </el-dialog>
+    <update-apply-modal :visible.sync="updateModalVisible"
+                        :btn-loading="btnLoading"
+                        :templates="templates"
+                        :apply-info="applyInfo"
+                        @confirm="updateConfirm"></update-apply-modal>
   </section>
 </template>
 <script>
-import isEqual from 'lodash/isEqual'
-import { ApplyStateMapping, typeMapping, templateTypeMapping } from '../../utils/constant'
+import { ApplyStateMapping, typeMapping } from '../../utils/constant'
 import { serverMixin } from '../mixins/serverMixins'
 import { fetchAll, deleteOne, createOne, modifyOne } from '../../api/apply'
 import { fetchAll as fetchTemplate } from '../../api/template'
@@ -288,58 +157,19 @@ import { fetchAll as fetchSecurityGroup } from '../../api/securityGroup'
 import { fetchAll as fetchStorage } from '../../api/storage'
 import { mapState } from 'vuex'
 import CreateApplyModal from '../modal/CreateApplyModal'
+import UpdateApplyModal from '../modal/UpdateApplyModal'
 export default {
   name: 'Apply',
   mixins: [serverMixin],
   data () {
     return {
-      rules: {
-        instanceName: [
-          { required: true, message: '请输入实例名称', trigger: 'blur' }
-        ],
-        cpuNumber: [
-          { required: true, message: '请输入CPU内核数', trigger: 'blur' },
-          { type: 'number', message: 'CPU内核数必须为数字值', trigger: 'blur' }
-        ],
-        cpuSpeed: [
-          { required: true, message: '请输入CPU主频', trigger: 'blur' },
-          { type: 'number', message: 'CPU主频必须为数字值', trigger: 'blur' }
-        ],
-        memory: [
-          { required: true, message: '请输入内存大小', trigger: 'blur' },
-          { type: 'number', message: '内存必须为数字值', trigger: 'blur' }
-        ],
-        dueTime: [
-          { required: true, message: '请输入到期时间', trigger: 'blur' }
-        ]
-      },
       createModalVisible: false,
-      onceApplyVisible: false,
+      updateModalVisible: false,
       btnLoading: false,
-      activeNames: ['1', '2', '3', '4'],
       templates: [],
       getSecurityGroup: [],
       getStorage: [],
-      tabTitel: [0, 1, 2, 3], // 对应系统模板，应用模板...
-      dataDisk: {
-        id: -1,
-        storageName: 'DATADISK',
-        storageSize: ''
-      },
-      addStorage: false,
-      updateInstance: {},
-      hasDataDisk: -1,
-      updateDataDisk: {},
-      selectedId: -1,
-      temp: 1,
-      applyAgain: [1, 3]
-    }
-  },
-  filters: {
-    filterDataDisk (val) {
-      if (val) {
-        return val.filter(v => v.storageName !== 'DATADISK')
-      }
+      selectedId: -1
     }
   },
   methods: {
@@ -390,37 +220,10 @@ export default {
             })
         })
         .catch(() => {
-          this.$message.info({ message: '已取消操作' })
+          this.$message.info({ message: '已取消删除操作' })
         })
     },
-    dialogClosed () {
-      this.addStorage = false
-      this.createInstance = { ...this.originInstance }
-      this.$refs.ruleForm.clearValidate()
-    },
-    // 关闭前确认
-    beforeClose (done) {
-      if (isEqual(this.createInstance, this.originInstance)) {
-        done()
-      } else {
-        this.$confirm('有未保存的修改，是否退出？', {
-          type: 'warning',
-          confirmButtonText: '确定',
-          cancelButtonText: '取消'
-        })
-          .then(() => {
-            done()
-          })
-          .catch(() => {})
-      }
-    },
-    deleteDataDisk () {
-      this.addStorage = false
-      if (this.hasDataDisk !== -1) {
-        this.temp = 2
-      }
-    },
-    // 确认撤销
+    // 撤销
     revokeConfirm () {
       this.$confirm(`是否撤销
         ${this.items.find(list => list.id === this.selectedId).instanceName}
@@ -428,127 +231,75 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        this.updateInstance = Object.assign({}, this.items.find(list => list.id === this.selectedId))
-        this.updateInstance.applyState = 3
-        modifyOne(this.updateInstance)
-          .then(res => {
-            const { data, message } = res.data
-            this.$message.success(message)
-            this.items.splice(
-              this.items.findIndex(item => item.id === data.id),
-              1,
-              data
-            )
-          })
-          .catch(error => {
-            this.$message.error(error)
-          })
-          .then(() => {
-            this.btnLoading = false
-          }).catch(() => {
-            this.$message.info('已取消操作')
-          })
       })
+        .then(() => {
+          this.applyInfo.applyState = 3
+          modifyOne(this.applyInfo)
+            .then(res => {
+              const { data, message } = res.data
+              this.$message.success(message)
+              this.items.splice(
+                this.items.findIndex(item => item.id === data.id),
+                1,
+                data
+              )
+            })
+            .catch(error => {
+              this.$message.error(error)
+            })
+        })
+        .catch(() => {
+          this.$message.info('已取消撤销操作')
+        })
     },
-    // 重新申请
+    // 已选项id
     selectOne ({ row }) {
       this.selectedId = row.id
-      if (this.applyAgain.indexOf(row.applyState) !== -1) {
-        this.temp = 1
-        this.onceApplyVisible = true
+      if ([1, 3].includes(row.applyState)) {
+        this.updateModalVisible = true
       } else if (row.applyState === 0) {
         this.$message.warning({ message: '申请已通过，无法重新申请！' })
       } else if (row.applyState === 2) {
         this.revokeConfirm()
       }
     },
-    openOnceApplyDialog () {
-      this.updateInstance = Object.assign({}, this.items.find(list => list.id === this.selectedId))
-      this.hasDataDisk = this.updateInstance.storages.findIndex(v => v.storageName === 'DATADISK')
-      if (this.hasDataDisk === -1) { // 不存在DATADISK
-        this.addStorage = false
-        this.updateDataDisk = {
-          id: -1,
-          storageName: 'DATADISK',
-          storageSize: ''
-        }
-      } else { // 存在DATADISK
-        this.addStorage = true
-        this.updateDataDisk = Object.assign({}, this.updateInstance.storages.find(v => v.storageName === 'DATADISK'))
-      }
-    },
-    updateConfirm () {
-      if (this.addStorage && this.updateDataDisk.storageSize === '') {
-        this.$message.warning({ message: '请选择DATADISK大小' })
-      } else {
-        this.$refs.ruleForm.validate((valid) => {
-          if (valid) {
-            this.btnLoading = true
-            if (this.hasDataDisk !== -1 && this.addStorage) {
-              this.updateInstance.storages.splice(this.hasDataDisk, 1, this.updateDataDisk)
-            } else if (this.hasDataDisk !== -1 && this.addStorage === false) {
-              this.updateInstance.storages.splice(this.hasDataDisk, 1)
-            } else if (this.hasDataDisk === -1 && this.addStorage) {
-              this.updateInstance.storages.push(this.updateDataDisk)
-            }
-            modifyOne(this.updateInstance)
-              .then(res => {
-                this.onceApplyVisible = false
-                const { data, message } = res.data
-                this.$message.success(message)
-                this.items.splice(
-                  this.items.findIndex(item => item.id === data.id),
-                  1,
-                  data
-                )
-              })
-              .catch(error => {
-                this.$message.error(error)
-              })
-              .then(() => {
-                this.btnLoading = false
-              })
-          } else {
-            return false
-          }
+    // 更新
+    updateConfirm (data) {
+      this.btnLoading = true
+      modifyOne(data)
+        .then(res => {
+          this.updateModalVisible = false
+          const { data, message } = res.data
+          this.$message.success(message)
+          this.items.splice(
+            this.items.findIndex(item => item.id === data.id),
+            1,
+            data
+          )
         })
-      }
+        .catch(error => {
+          this.$message.error(error)
+        })
+        .then(() => {
+          this.btnLoading = false
+        })
     },
     // 添加
-    createConfirm () {
-      if (this.createInstance.templateId === '') {
-        this.$message.warning({ message: '请选择模板' })
-      } else if (this.addStorage && this.dataDisk.storageSize === '') {
-        this.$message.warning({ message: '请选择DATADISK大小' })
-      } else {
-        this.$refs.ruleForm.validate((valid) => {
-          if (valid) {
-            this.btnLoading = true
-            this.createInstance.securityGroup = this.getSecurityGroup
-            this.createInstance.storages = this.getStorage
-            this.createInstance.createTime = this.nowDate
-            if (this.addStorage) {
-              this.createInstance.storages.push(this.dataDisk)
-            }
-            createOne(this.createInstance)
-              .then(res => {
-                this.createModalVisible = false
-                const { data, message } = res.data
-                this.$message.success(message)
-                this.items.push(data)
-              })
-              .catch(error => {
-                this.$message.error(error)
-              })
-              .then(() => {
-                this.btnLoading = false
-              })
-          } else {
-            return false
-          }
+    createConfirm (data) {
+      this.btnLoading = true
+      createOne(data)
+        .then(res => {
+          this.createModalVisible = false
+          const { data, message } = res.data
+          this.$message.success(message)
+          this.items.push(data)
         })
-      }
+        .catch(error => {
+          this.$message.error(error)
+        })
+        .then(() => {
+          this.btnLoading = false
+        })
     },
     applyState (state) {
       return ApplyStateMapping[state]
@@ -563,13 +314,14 @@ export default {
         return state.base.userInfo.loginName
       }
     }),
-    // 获取当前时间，yyyy-mm-dd hh-mm-ss
-    nowDate () {
-      return new Date().toLocaleDateString().replace(/\//g, '-') + ' ' + new Date().toTimeString().substr(0, 8)
+    // 已选项信息
+    applyInfo () {
+      return this.items.find(list => list.id === this.selectedId) || {}
     }
   },
   components: {
-    CreateApplyModal
+    CreateApplyModal,
+    UpdateApplyModal
   }
 }
 </script>
